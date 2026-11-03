@@ -12,8 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.paddingFromBaseline
-import androidx.compose.foundation.layout.size
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -73,9 +72,16 @@ fun ProgressCard(level: Int, modifier: Modifier = Modifier) {
         contentAlignment = Alignment.Center) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(50.dp)) {
+            verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("ТВОЙ ПРОГРЕСС", color = PasteDarklPink, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             Text("Уровень $level", fontSize = 35.sp,fontWeight = FontWeight.Bold, color = PastelPink)
+            LinearProgressIndicator(
+                progress = { 0.124f },
+                modifier = Modifier.fillMaxWidth(),
+                color = PastelPink,
+                trackColor = PasteDarklPink
+            )
+            Text("Опыт: 124 / 1000")
         }
 
     }
