@@ -11,6 +11,14 @@ import kotlinx.coroutines.launch
 class PomodoroViewModel: ViewModel() {
     private val _timer = MutableStateFlow(TimerProgress())
     val timer = _timer.asStateFlow()
+    private val _userProgress = MutableStateFlow(
+        UserProgress(
+            name = "Admiral",
+            totalXp = 0
+        )
+    )
+
+    val userProgress = _userProgress.asStateFlow()
     private var timerJob: Job? = null
 
     fun startSession() {
@@ -52,8 +60,10 @@ class PomodoroViewModel: ViewModel() {
     private fun  completedSession() {
         if(_timer.value.stateSession == StateSession.RUNNING && _timer.value.remainingTimer == 0) {
 //            timerJob?.cancel()
+            addXp(rewardXp(_timer.value.userTimer))
             _timer.value = _timer.value.copy(
                 stateSession = StateSession.COMPLETED)
+
         }
     }
     private fun launchTimer() {
@@ -67,5 +77,11 @@ class PomodoroViewModel: ViewModel() {
             }
            completedSession()
         }
+    }
+
+    private fun addXp(amount: Int) {
+        _userProgress.value = _userProgress.value.copy(
+            totalXp = _userProgress.value.totalXp + amount
+        )
     }
 }
