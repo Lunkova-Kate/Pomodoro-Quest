@@ -7,6 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import lunkova.pomodoro.Timer.TimerProgress
 
 class PomodoroViewModel: ViewModel() {
     private val _timer = MutableStateFlow(TimerProgress())
@@ -79,6 +80,12 @@ class PomodoroViewModel: ViewModel() {
         }
     }
 
+    fun resetSession(minutes: Int) {
+        timerJob?.cancel()
+        timerJob = null
+
+        _timer.value = TimerProgress(userTimer = minutes)
+    }
     private fun addXp(amount: Int) {
         _userProgress.value = _userProgress.value.copy(
             totalXp = _userProgress.value.totalXp + amount
