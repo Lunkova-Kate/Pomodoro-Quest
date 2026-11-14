@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import lunkova.pomodoro.ui.theme.Pomodor0QuestTheme
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 val DarkRed = Color(0xFF3D0807)
 val PasteDarklPink = Color(0xFFAD797D)
@@ -51,20 +53,22 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             Pomodor0QuestTheme {
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    containerColor = GrayBac
-                ) { innerPadding ->
-                    Column(
-                        modifier = Modifier
-                            .padding(innerPadding)
-                            .fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(50.dp)
-                    ) {
-                        Greeting("Admiral")
-                        ProgressCard(level = 25)
-                    }
-                }
+//                Scaffold(
+//                    modifier = Modifier.fillMaxSize(),
+//                    containerColor = GrayBac
+//                ) { innerPadding ->
+//                    Column(
+//                        modifier = Modifier
+//                            .padding(innerPadding)
+//                            .fillMaxWidth(),
+//                        verticalArrangement = Arrangement.spacedBy(50.dp)
+//                    ) {
+//                        Greeting("Admiral")
+//                        ProgressCard(level = 25)
+//                    }
+//                }
+                val viewModel: PomodoroViewModel = viewModel()
+                TimerScreen(viewModel)
             }
         }
     }
