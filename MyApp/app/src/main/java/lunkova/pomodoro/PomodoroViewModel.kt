@@ -41,14 +41,31 @@ class PomodoroViewModel: ViewModel() {
         }
     }
 
+    fun cancelSession() {
+        if((_timer.value.stateSession == StateSession.PAUSED) || (_timer.value.stateSession == StateSession.RUNNING)) {
+            timerJob?.cancel()
+            _timer.value = _timer.value.copy(
+                stateSession = StateSession.CANCELLED)
+        }
+    }
+
+    private fun  completedSession() {
+        if(_timer.value.stateSession == StateSession.RUNNING && _timer.value.remainingTimer == 0) {
+//            timerJob?.cancel()
+            _timer.value = _timer.value.copy(
+                stateSession = StateSession.COMPLETED)
+        }
+    }
     private fun launchTimer() {
         timerJob = viewModelScope.launch {
             while (_timer.value.remainingTimer > 0) {
                 delay(1000)
+
                 _timer.value = _timer.value.copy(
                     remainingTimer = _timer.value.remainingTimer - 1
                 )
             }
+           completedSession()
         }
     }
 }
