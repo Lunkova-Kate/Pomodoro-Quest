@@ -14,7 +14,6 @@ class PomodoroViewModel: ViewModel() {
     val timer = _timer.asStateFlow()
     private val _userProgress = MutableStateFlow(
         UserProgress(
-            name = "Admiral",
             totalXp = 0
         )
     )

@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import lunkova.pomodoro.Timer.FocusSettings
 import lunkova.pomodoro.ui.theme.Pomodor0QuestTheme
 
 class MainActivity : ComponentActivity() {
@@ -26,8 +27,9 @@ class MainActivity : ComponentActivity() {
 
                 val pomodoroViewModel: PomodoroViewModel = viewModel()
                 val userProgress by pomodoroViewModel.userProgress.collectAsStateWithLifecycle()
+                val level = Level.fromXp(userProgress.totalXp)
                 var selectedMinutes by rememberSaveable {
-                    mutableIntStateOf(25)
+                    mutableIntStateOf(FocusSettings.defaultMinutes)
                 }
                 var showTimer by remember {
                     mutableStateOf(false)
@@ -43,6 +45,7 @@ class MainActivity : ComponentActivity() {
                 } else {
                     MainScreen(
                         totalXp = userProgress.totalXp,
+                        level = level,
                         selectedMinutes = selectedMinutes,
                         onMinutesSelected = { minutes ->
                             selectedMinutes = minutes
