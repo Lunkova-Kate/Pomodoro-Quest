@@ -32,16 +32,17 @@ fun TimerScreen(viewModel: PomodoroViewModel,
 
     val timerState by viewModel.timer.collectAsStateWithLifecycle()
 
-    val remaining = timerState.remainingTimer
-    val totalSeconds = timerState.userTimer * 60
+    val remainingMillis = timerState.remainingMillis
+    val totalMillis = timerState.userTimer * 60_000L
 
-    val minutes = remaining / 60
-    val seconds = remaining % 60
+    val remainingSeconds = (remainingMillis + 999L) / 1000L
+
+    val minutes = remainingSeconds / 60
+    val seconds = remainingSeconds % 60
 
     val formattedTime = "%02d:%02d".format(minutes, seconds)
-
-    val progress = if (totalSeconds > 0) {
-        ((totalSeconds - remaining).toFloat() / totalSeconds)
+    val progress = if (totalMillis > 0L) {
+        ((totalMillis - remainingMillis).toFloat() / totalMillis)
             .coerceIn(0f, 1f)
     } else {
         0f

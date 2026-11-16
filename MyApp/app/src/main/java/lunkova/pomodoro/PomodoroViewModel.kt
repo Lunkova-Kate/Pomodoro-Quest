@@ -1,5 +1,6 @@
 package lunkova.pomodoro
 
+import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
@@ -58,7 +59,7 @@ class PomodoroViewModel: ViewModel() {
     }
 
     private fun  completedSession() {
-        if(_timer.value.stateSession == StateSession.RUNNING && _timer.value.remainingTimer == 0) {
+        if(_timer.value.stateSession == StateSession.RUNNING && _timer.value.remainingMillis == 0L) {
 //            timerJob?.cancel()
             addXp(rewardXp(_timer.value.userTimer))
             _timer.value = _timer.value.copy(
@@ -68,14 +69,27 @@ class PomodoroViewModel: ViewModel() {
     }
     private fun launchTimer() {
         timerJob = viewModelScope.launch {
-            while (_timer.value.remainingTimer > 0) {
-                delay(1000)
+
+            val finishTime = SystemClock.elapsedRealtime() +
+                    _timer.value.remainingMillis
+
+            while (true) {
+                val millisLeft = (
+                        finishTime - SystemClock.elapsedRealtime()
+                        ).coerceAtLeast(0L)
 
                 _timer.value = _timer.value.copy(
-                    remainingTimer = _timer.value.remainingTimer - 1
+                    remainingMillis = millisLeft
                 )
+
+                if (millisLeft == 0L) {
+                    break
+                }
+
+                delay(100)
             }
-           completedSession()
+
+            completedSession()
         }
     }
 

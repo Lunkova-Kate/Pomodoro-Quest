@@ -112,7 +112,7 @@ fun Greeting(
         verticalArrangement = Arrangement.spacedBy(3.dp)
     ) {
         Text(
-            text = "Добрый день!",
+            text = "Привет!",
             fontSize = 12.sp,
             color = PasteDarklPink
         )
