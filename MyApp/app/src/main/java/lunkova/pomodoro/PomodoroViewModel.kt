@@ -153,33 +153,6 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
         }
     }
     private var finishElapsedMillisInApp: Long = 0L
-//    private fun launchTimer() {
-//
-//        timerJob = viewModelScope.launch {
-//
-//
-//            val finishTime = SystemClock.elapsedRealtime() +
-//                    _timer.value.remainingMillis
-//
-//            while (true) {
-//                val millisLeft = (
-//                        finishTime - SystemClock.elapsedRealtime()
-//                        ).coerceAtLeast(0L)
-//
-//                _timer.value = _timer.value.copy(
-//                    remainingMillis = millisLeft
-//                )
-//
-//                if (millisLeft == 0L) {
-//                    break
-//                }
-//
-//                delay(100)
-//            }
-//
-//            completedSession()
-//        }
-//    }
 
     fun resetSession(minutes: Int) {
         timerJob?.cancel()
@@ -187,9 +160,5 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
 
         _timer.value = TimerProgress(userTimer = minutes)
     }
-//    private fun addXp(amount: Int) {
-//        _userProgress.value = _userProgress.value.copy(
-//            totalXp = _userProgress.value.totalXp + amount
-//        )
-//    }
+
 }
