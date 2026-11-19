@@ -70,11 +70,11 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
                     stateSession = StateSession.RUNNING
                 )
             )
-
+        }
             timerJob = viewModelScope.launch {
                 runTimerWithSave()
             }
-        }
+
     }
 
     private suspend fun runTimerWithSave() {
@@ -151,7 +151,7 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
                     ).coerceAtLeast(0L)
             timerJob?.cancel()
             _timer.value = _timer.value.copy(remainingMillis = remaining,stateSession = StateSession.PAUSED)
-            viewModelScope.launch {
+
                 enqueueSave(
                     SavedSession(
                         userChooseTimer = _timer.value.userTimer,
@@ -160,7 +160,7 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
                         stateSession = StateSession.PAUSED
                     )
                 )
-            }
+
         }
 
  }
