@@ -3,7 +3,6 @@ package lunkova.pomodoro
 import android.app.Application
 import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -11,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import lunkova.pomodoro.Timer.TimerProgress
+import kotlinx.coroutines.channels.Channel
 
 class PomodoroViewModel(app: Application): AndroidViewModel(app) {
     private val _timer = MutableStateFlow(TimerProgress())
@@ -28,6 +28,10 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
     val userProgress = _userProgress.asStateFlow()
     init {
         viewModelScope.launch {
+            for (session in saveQueue) {
+                repository.saveSession(session)
+            }
+
 
             try {
                 restoreSession()
@@ -43,8 +47,11 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
         }
     }
     private var timerJob: Job? = null
+    private val saveQueue = Channel<SavedSession>(Channel.UNLIMITED)
 
-
+    private fun enqueueSave(session: SavedSession) {
+        saveQueue.trySend(session)
+    }
     fun startSession() {
         if (_timer.value.stateSession != StateSession.SLEEPING) {
             return
@@ -55,7 +62,7 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
         val finishRestoreTime = System.currentTimeMillis() + remaining
         _timer.value = _timer.value.copy(stateSession = StateSession.RUNNING)
         timerJob = viewModelScope.launch {
-            repository.saveSession(
+            enqueueSave(
                 SavedSession(
                     userChooseTimer = _timer.value.userTimer,
                     remainingOnSaveMillis = remaining,
@@ -64,7 +71,9 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
                 )
             )
 
-            runTimerWithSave()
+            timerJob = viewModelScope.launch {
+                runTimerWithSave()
+            }
         }
     }
 
@@ -143,7 +152,7 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
             timerJob?.cancel()
             _timer.value = _timer.value.copy(remainingMillis = remaining,stateSession = StateSession.PAUSED)
             viewModelScope.launch {
-                repository.saveSession(
+                enqueueSave(
                     SavedSession(
                         userChooseTimer = _timer.value.userTimer,
                         remainingOnSaveMillis = remaining,
@@ -178,7 +187,7 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
         )
 
         timerJob = viewModelScope.launch {
-            repository.saveSession(
+            enqueueSave(
                 SavedSession(
                     userChooseTimer = _timer.value.userTimer,
                     remainingOnSaveMillis = remaining,
@@ -187,7 +196,9 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
                 )
             )
 
-            runTimerWithSave()
+            timerJob = viewModelScope.launch {
+                runTimerWithSave()
+            }
         }
     }
 
@@ -208,9 +219,7 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
                 stateSession = StateSession.CANCELLED
             )
 
-            viewModelScope.launch {
-                repository.saveSession(session)
-            }
+            enqueueSave(session)
         }
     }
 
