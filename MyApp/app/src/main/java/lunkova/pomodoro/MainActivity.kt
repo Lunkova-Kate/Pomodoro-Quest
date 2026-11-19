@@ -32,7 +32,7 @@ class MainActivity : ComponentActivity() {
                 var selectedMinutes by rememberSaveable {
                     mutableIntStateOf(FocusSettings.defaultMinutes)
                 }
-                var showTimer by remember {
+                var showTimer by rememberSaveable {
                     mutableStateOf(false)
                 }
 
