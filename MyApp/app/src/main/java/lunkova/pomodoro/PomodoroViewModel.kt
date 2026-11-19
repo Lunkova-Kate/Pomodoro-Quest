@@ -72,12 +72,12 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
             )
         }
             timerJob = viewModelScope.launch {
-                runTimerWithSave()
+                runTimerLoop()
             }
 
     }
 
-    private suspend fun runTimerWithSave() {
+    private suspend fun runTimerLoop() {
         while (_timer.value.stateSession == StateSession.RUNNING) {
 
             val remaining = (
@@ -120,7 +120,7 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
                         SystemClock.elapsedRealtime() + remaining
 
                     timerJob = viewModelScope.launch {
-                        runTimerWithSave()
+                        runTimerLoop()
                     }
                 }
             }
@@ -197,7 +197,7 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
             )
         }
             timerJob = viewModelScope.launch {
-                runTimerWithSave()
+                runTimerLoop()
             }
 
     }
