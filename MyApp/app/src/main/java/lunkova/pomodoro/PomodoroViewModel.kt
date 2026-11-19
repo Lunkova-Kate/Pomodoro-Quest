@@ -63,7 +63,7 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
 
         val finishRestoreTime = System.currentTimeMillis() + remaining
         _timer.value = _timer.value.copy(stateSession = StateSession.RUNNING)
-        timerJob = viewModelScope.launch {
+
             enqueueSave(
                 SavedSession(
                     userChooseTimer = _timer.value.userTimer,
@@ -72,7 +72,7 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
                     stateSession = StateSession.RUNNING
                 )
             )
-        }
+
             timerJob = viewModelScope.launch {
                 runTimerLoop()
             }
@@ -188,7 +188,7 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
             stateSession = StateSession.RUNNING
         )
 
-        timerJob = viewModelScope.launch {
+
             enqueueSave(
                 SavedSession(
                     userChooseTimer = _timer.value.userTimer,
@@ -197,7 +197,7 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
                     stateSession = StateSession.RUNNING
                 )
             )
-        }
+
             timerJob = viewModelScope.launch {
                 runTimerLoop()
             }
