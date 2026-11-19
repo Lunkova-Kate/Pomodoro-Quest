@@ -3,7 +3,9 @@ package lunkova.pomodoro.Timer
 import android.widget.NumberPicker
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material3.*
@@ -39,7 +41,7 @@ fun FocusTimePicker(
             color = Color(0xFFD9D9D9)
         ) {
             Column(
-                modifier = Modifier.padding(20.dp),
+                modifier = Modifier.padding(20.dp).verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -55,6 +57,7 @@ fun FocusTimePicker(
                         .height(180.dp)
                         .clip(RoundedCornerShape(22.dp))
                         .background(Color(0xFF383838)),
+
                     contentAlignment = Alignment.Center
                 ) {
                     AndroidView(

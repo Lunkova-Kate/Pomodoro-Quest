@@ -1,8 +1,10 @@
-package lunkova.pomodoro
+package lunkova.pomodoro.Screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
@@ -15,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import lunkova.pomodoro.Level
 
 private val BackgroundColor = Color(0xFF3C444D)
 private val CardRed = Color(0xFF850F0E)
@@ -38,7 +41,8 @@ fun ResultScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor),
+            .background(BackgroundColor)
+            .verticalScroll(rememberScrollState()),
         contentAlignment = Alignment.Center
     ) {
         Column(

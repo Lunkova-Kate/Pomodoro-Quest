@@ -8,10 +8,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import lunkova.pomodoro.Screen.MainScreen
+import lunkova.pomodoro.Screen.ResultScreen
+import lunkova.pomodoro.Screen.TimerScreen
 import lunkova.pomodoro.Timer.FocusSettings
 import lunkova.pomodoro.ui.theme.Pomodor0QuestTheme
 

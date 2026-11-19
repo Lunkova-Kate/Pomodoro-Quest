@@ -1,4 +1,4 @@
-package lunkova.pomodoro
+package lunkova.pomodoro.Screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -19,6 +19,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import lunkova.pomodoro.PomodoroViewModel
+import lunkova.pomodoro.StateSession
+import lunkova.pomodoro.rewardXp
 
 private val BackgroundColor = Color(0xFF3C444D)
 private val CardRed = Color(0xFF850F0E)
@@ -53,7 +58,8 @@ fun TimerScreen(viewModel: PomodoroViewModel,
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor),
+            .background(BackgroundColor)
+            .verticalScroll(rememberScrollState()),
         contentAlignment = Alignment.Center
     ) {
         Column(

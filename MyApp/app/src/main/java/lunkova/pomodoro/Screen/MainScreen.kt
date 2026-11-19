@@ -1,4 +1,4 @@
-package lunkova.pomodoro
+package lunkova.pomodoro.Screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -36,6 +36,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import lunkova.pomodoro.Timer.FocusTimePicker
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import lunkova.pomodoro.Level
+import lunkova.pomodoro.Rank
 
 private val DarkRed = Color(0xFF3D0807)
 private val PasteDarklPink = Color(0xFFAD797D)
@@ -68,7 +72,8 @@ fun MainScreen(
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+            .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(50.dp)
         ) {
             Greeting(Rank.getTitle(level))
