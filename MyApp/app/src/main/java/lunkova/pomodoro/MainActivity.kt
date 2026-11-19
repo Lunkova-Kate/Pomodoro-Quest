@@ -27,6 +27,7 @@ class MainActivity : ComponentActivity() {
 
                 val pomodoroViewModel: PomodoroViewModel = viewModel()
                 val userProgress by pomodoroViewModel.userProgress.collectAsStateWithLifecycle()
+                val timerState by pomodoroViewModel.timer.collectAsStateWithLifecycle()
                 val level = Level.fromXp(userProgress.totalXp)
                 var selectedMinutes by rememberSaveable {
                     mutableIntStateOf(FocusSettings.defaultMinutes)
@@ -36,12 +37,28 @@ class MainActivity : ComponentActivity() {
                 }
 
                 if (showTimer) {
-                    TimerScreen(
-                        viewModel = pomodoroViewModel,
-                        onCancelClick = {
-                            showTimer = false
-                        }
-                    )
+
+                    if (timerState.stateSession == StateSession.COMPLETED) {
+
+                        ResultScreen(
+                            minutes = timerState.userTimer,
+                            earnedXp = rewardXp(timerState.userTimer),
+                            totalXp = userProgress.totalXp,
+                            onBackClick = {
+                                showTimer = false
+                            }
+                        )
+
+                    } else {
+
+                        TimerScreen(
+                            viewModel = pomodoroViewModel,
+                            onCancelClick = {
+                                showTimer = false
+                            }
+                        )
+                    }
+
                 } else {
                     MainScreen(
                         totalXp = userProgress.totalXp,
