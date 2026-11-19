@@ -51,6 +51,25 @@ class UserProgressRepository(
         return updatedPreferences[TOTAL_XP] ?: 0
     }
 
+    suspend fun completeSessionIfRunning(earnedXp: Int): Int? {
+        var newTotalXp: Int? = null
+
+        context.userDataStore.edit { preferences ->
+
+            if (preferences[SESSION_STATE] == StateSession.RUNNING.name) {
+                val currentXp = preferences[TOTAL_XP] ?: 0
+                val updatedXp = currentXp + earnedXp
+
+                preferences[TOTAL_XP] = updatedXp
+                preferences[SESSION_STATE] = StateSession.COMPLETED.name
+                preferences[SESSION_REMAINING] = 0L
+
+                newTotalXp = updatedXp
+            }
+        }
+
+        return newTotalXp
+    }
     suspend fun saveSession(session: SavedSession) {
         context.userDataStore.edit { preferences ->
             preferences[SESSION_MINUTES] = session.userChooseTimer
@@ -60,6 +79,17 @@ class UserProgressRepository(
         }
     }
 
+    suspend fun clearCompletedSession() {
+        context.userDataStore.edit { preferences ->
+
+            if (preferences[SESSION_STATE] == StateSession.COMPLETED.name) {
+                preferences.remove(SESSION_MINUTES)
+                preferences.remove(SESSION_REMAINING)
+                preferences.remove(SESSION_FINISH)
+                preferences.remove(SESSION_STATE)
+            }
+        }
+    }
     suspend fun loadSession(): SavedSession? {
         val preferences = context.userDataStore.data.first()
 

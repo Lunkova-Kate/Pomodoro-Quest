@@ -15,6 +15,9 @@ import lunkova.pomodoro.Timer.TimerProgress
 class PomodoroViewModel(app: Application): AndroidViewModel(app) {
     private val _timer = MutableStateFlow(TimerProgress())
     val timer = _timer.asStateFlow()
+    private val _restored = MutableStateFlow(false)
+    val restored = _restored.asStateFlow()
+
     private val repository = UserProgressRepository(app)
     private val _userProgress = MutableStateFlow(
         UserProgress(
@@ -25,8 +28,17 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
     val userProgress = _userProgress.asStateFlow()
     init {
         viewModelScope.launch {
+
+            try {
+                restoreSession()
+            } finally {
+                _restored.value = true
+            }
+
             repository.totalXp.collect { savedXp ->
-                _userProgress.value = _userProgress.value.copy (totalXp = savedXp)
+                _userProgress.value = _userProgress.value.copy(
+                    totalXp = savedXp
+                )
             }
         }
     }
@@ -73,6 +85,54 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
             }
 
             delay(100)
+        }
+    }
+
+    private suspend fun restoreSession() {
+        val saved = repository.loadSession() ?: return
+
+        when (saved.stateSession) {
+
+            StateSession.RUNNING -> {
+                val remaining = (
+                        saved.finishSession - System.currentTimeMillis()
+                        ).coerceAtLeast(0L)
+
+                _timer.value = TimerProgress(
+                    userTimer = saved.userChooseTimer,
+                    remainingMillis = remaining,
+                    stateSession = StateSession.RUNNING
+                )
+
+                if (remaining == 0L) {
+                    completedSession()
+                } else {
+                    finishElapsedMillisInApp =
+                        SystemClock.elapsedRealtime() + remaining
+
+                    timerJob = viewModelScope.launch {
+                        runTimerWithSave()
+                    }
+                }
+            }
+
+            StateSession.PAUSED -> {
+                _timer.value = TimerProgress(
+                    userTimer = saved.userChooseTimer,
+                    remainingMillis = saved.remainingOnSaveMillis,
+                    stateSession = StateSession.PAUSED
+                )
+            }
+
+            StateSession.COMPLETED -> {
+                _timer.value = TimerProgress(
+                    userTimer = saved.userChooseTimer,
+                    remainingMillis = 0L,
+                    stateSession = StateSession.COMPLETED
+                )
+            }
+
+            else -> Unit
         }
     }
     fun pauseSession() {
@@ -132,24 +192,61 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
     }
 
     fun cancelSession() {
-        if((_timer.value.stateSession == StateSession.PAUSED) || (_timer.value.stateSession == StateSession.RUNNING)) {
+        if (_timer.value.stateSession == StateSession.RUNNING ||
+            _timer.value.stateSession == StateSession.PAUSED
+        ) {
             timerJob?.cancel()
+
             _timer.value = _timer.value.copy(
-                stateSession = StateSession.CANCELLED)
+                stateSession = StateSession.CANCELLED
+            )
+
+            val session = SavedSession(
+                userChooseTimer = _timer.value.userTimer,
+                remainingOnSaveMillis = _timer.value.remainingMillis,
+                finishSession = 0L,
+                stateSession = StateSession.CANCELLED
+            )
+
+            viewModelScope.launch {
+                repository.saveSession(session)
+            }
         }
     }
 
-    private suspend fun  completedSession() {
-        if(_timer.value.stateSession == StateSession.RUNNING && _timer.value.remainingMillis == 0L) {
-            val earnedXp = rewardXp(_timer.value.userTimer)
-            val newTotalXp = repository.addXp(earnedXp)
+    private suspend fun completedSession() {
+        if (_timer.value.stateSession != StateSession.RUNNING ||
+            _timer.value.remainingMillis != 0L
+        ) {
+            return
+        }
 
+        val earnedXp = rewardXp(_timer.value.userTimer)
+
+        val newTotalXp = repository.completeSessionIfRunning(earnedXp)
+
+        if (newTotalXp != null) {
             _userProgress.value = _userProgress.value.copy(
                 totalXp = newTotalXp
             )
-            _timer.value = _timer.value.copy(
-                stateSession = StateSession.COMPLETED)
+        }
 
+        _timer.value = _timer.value.copy(
+            stateSession = StateSession.COMPLETED
+        )
+    }
+
+    fun closeCompletedSession() {
+        if (_timer.value.stateSession != StateSession.COMPLETED) {
+            return
+        }
+
+        viewModelScope.launch {
+            repository.clearCompletedSession()
+
+            if (_timer.value.stateSession == StateSession.COMPLETED) {
+                _timer.value = TimerProgress()
+            }
         }
     }
     private var finishElapsedMillisInApp: Long = 0L
