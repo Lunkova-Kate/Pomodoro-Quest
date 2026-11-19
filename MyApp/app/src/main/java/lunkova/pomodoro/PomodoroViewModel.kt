@@ -195,11 +195,11 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
                     stateSession = StateSession.RUNNING
                 )
             )
-
+        }
             timerJob = viewModelScope.launch {
                 runTimerWithSave()
             }
-        }
+
     }
 
     fun cancelSession() {
