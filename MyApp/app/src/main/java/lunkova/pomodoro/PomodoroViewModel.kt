@@ -37,27 +37,97 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
         if (_timer.value.stateSession != StateSession.SLEEPING) {
             return
         }
+        val remaining = _timer.value.remainingMillis
+        finishElapsedMillisInApp = SystemClock.elapsedRealtime() + remaining
 
+        val finishRestoreTime = System.currentTimeMillis() + remaining
         _timer.value = _timer.value.copy(stateSession = StateSession.RUNNING)
-        launchTimer()
-        }
-
-
-    fun pauseSession() {
-        if (_timer.value.stateSession == StateSession.RUNNING) {
-            timerJob?.cancel()
-            _timer.value = _timer.value.copy(stateSession = StateSession.PAUSED)
-        }
-
-    }
-
-    fun resumeSession() {
-        if (_timer.value.stateSession == StateSession.PAUSED) {
-            _timer.value = _timer.value.copy(
-                stateSession = StateSession.RUNNING
+        timerJob = viewModelScope.launch {
+            repository.saveSession(
+                SavedSession(
+                    userChooseTimer = _timer.value.userTimer,
+                    remainingOnSaveMillis = remaining,
+                    finishSession = finishRestoreTime,
+                    stateSession = StateSession.RUNNING
+                )
             )
 
-            launchTimer()
+            runTimerWithSave()
+        }
+    }
+
+    private suspend fun runTimerWithSave() {
+        while (_timer.value.stateSession == StateSession.RUNNING) {
+
+            val remaining = (
+                    finishElapsedMillisInApp - SystemClock.elapsedRealtime()
+                    ).coerceAtLeast(0L)
+
+            _timer.value = _timer.value.copy(
+                remainingMillis = remaining
+            )
+
+            if (remaining == 0L) {
+                completedSession()
+                break
+            }
+
+            delay(100)
+        }
+    }
+    fun pauseSession() {
+        if (_timer.value.stateSession == StateSession.RUNNING) {
+            val remaining = (
+                    finishElapsedMillisInApp - SystemClock.elapsedRealtime()
+                    ).coerceAtLeast(0L)
+            timerJob?.cancel()
+            _timer.value = _timer.value.copy(remainingMillis = remaining,stateSession = StateSession.PAUSED)
+            viewModelScope.launch {
+                repository.saveSession(
+                    SavedSession(
+                        userChooseTimer = _timer.value.userTimer,
+                        remainingOnSaveMillis = remaining,
+                        finishSession = 0L,
+                        stateSession = StateSession.PAUSED
+                    )
+                )
+            }
+        }
+
+ }
+//    val userChooseTimer: Int,
+//    val remainingOnSaveMillis: Long,
+//    val finishSession: Long,
+//    val finishSession: StateSession)
+
+    fun resumeSession() {
+        if (_timer.value.stateSession != StateSession.PAUSED) {
+            return
+        }
+
+        val remaining = _timer.value.remainingMillis
+
+        finishElapsedMillisInApp =
+            SystemClock.elapsedRealtime() + remaining
+
+        val finishRestoreTime =
+            System.currentTimeMillis() + remaining
+
+        _timer.value = _timer.value.copy(
+            stateSession = StateSession.RUNNING
+        )
+
+        timerJob = viewModelScope.launch {
+            repository.saveSession(
+                SavedSession(
+                    userChooseTimer = _timer.value.userTimer,
+                    remainingOnSaveMillis = remaining,
+                    finishSession = finishRestoreTime,
+                    stateSession = StateSession.RUNNING
+                )
+            )
+
+            runTimerWithSave()
         }
     }
 
@@ -82,31 +152,34 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
 
         }
     }
-    private fun launchTimer() {
-        timerJob = viewModelScope.launch {
-
-            val finishTime = SystemClock.elapsedRealtime() +
-                    _timer.value.remainingMillis
-
-            while (true) {
-                val millisLeft = (
-                        finishTime - SystemClock.elapsedRealtime()
-                        ).coerceAtLeast(0L)
-
-                _timer.value = _timer.value.copy(
-                    remainingMillis = millisLeft
-                )
-
-                if (millisLeft == 0L) {
-                    break
-                }
-
-                delay(100)
-            }
-
-            completedSession()
-        }
-    }
+    private var finishElapsedMillisInApp: Long = 0L
+//    private fun launchTimer() {
+//
+//        timerJob = viewModelScope.launch {
+//
+//
+//            val finishTime = SystemClock.elapsedRealtime() +
+//                    _timer.value.remainingMillis
+//
+//            while (true) {
+//                val millisLeft = (
+//                        finishTime - SystemClock.elapsedRealtime()
+//                        ).coerceAtLeast(0L)
+//
+//                _timer.value = _timer.value.copy(
+//                    remainingMillis = millisLeft
+//                )
+//
+//                if (millisLeft == 0L) {
+//                    break
+//                }
+//
+//                delay(100)
+//            }
+//
+//            completedSession()
+//        }
+//    }
 
     fun resetSession(minutes: Int) {
         timerJob?.cancel()
