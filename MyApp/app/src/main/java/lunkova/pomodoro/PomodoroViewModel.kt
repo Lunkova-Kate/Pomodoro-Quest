@@ -27,33 +27,32 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
     )
 
     val userProgress = _userProgress.asStateFlow()
+    private var timerJob: Job? = null
+    private val saveQueue =
+        Channel<SessionCommand>(Channel.UNLIMITED)
+
     init {
         viewModelScope.launch {
             for (command in saveQueue) {
-
                 when (command) {
-
                     is SessionCommand.Save -> {
                         repository.saveSession(command.session)
                     }
 
                     is SessionCommand.Complete -> {
-                        val newXp = repository.completeSessionIfRunning(
-                            command.earnedXp
-                        )
+                        val newXp =
+                            repository.completeSessionIfRunning(command.earnedXp)
 
                         command.result.complete(newXp)
                     }
 
                     is SessionCommand.ClearCompleted -> {
                         repository.clearCompletedSession()
-
                         command.result.complete(Unit)
                     }
                 }
             }
         }
-
 
         viewModelScope.launch {
             try {
@@ -69,9 +68,6 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
             }
         }
     }
-    private var timerJob: Job? = null
-    private val saveQueue =
-        Channel<SessionCommand>(Channel.UNLIMITED)
 
     private fun enqueueSave(session: SavedSession) {
         saveQueue.trySend(SessionCommand.Save(session)).getOrThrow()
