@@ -31,8 +31,10 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
             for (session in saveQueue) {
                 repository.saveSession(session)
             }
+        }
 
 
+        viewModelScope.launch {
             try {
                 restoreSession()
             } finally {
