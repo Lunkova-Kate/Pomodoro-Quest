@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import lunkova.pomodoro.Timer.TimerProgress
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.CompletableDeferred
 
 class PomodoroViewModel(app: Application): AndroidViewModel(app) {
     private val _timer = MutableStateFlow(TimerProgress())
@@ -28,8 +29,28 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
     val userProgress = _userProgress.asStateFlow()
     init {
         viewModelScope.launch {
-            for (session in saveQueue) {
-                repository.saveSession(session)
+            for (command in saveQueue) {
+
+                when (command) {
+
+                    is SessionCommand.Save -> {
+                        repository.saveSession(command.session)
+                    }
+
+                    is SessionCommand.Complete -> {
+                        val newXp = repository.completeSessionIfRunning(
+                            command.earnedXp
+                        )
+
+                        command.result.complete(newXp)
+                    }
+
+                    is SessionCommand.ClearCompleted -> {
+                        repository.clearCompletedSession()
+
+                        command.result.complete(Unit)
+                    }
+                }
             }
         }
 
@@ -49,10 +70,11 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
         }
     }
     private var timerJob: Job? = null
-    private val saveQueue = Channel<SavedSession>(Channel.UNLIMITED)
+    private val saveQueue =
+        Channel<SessionCommand>(Channel.UNLIMITED)
 
     private fun enqueueSave(session: SavedSession) {
-        saveQueue.trySend(session)
+        saveQueue.trySend(SessionCommand.Save(session)).getOrThrow()
     }
     fun startSession() {
         if (_timer.value.stateSession != StateSession.SLEEPING) {
@@ -234,17 +256,30 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
 
         val earnedXp = rewardXp(_timer.value.userTimer)
 
-        val newTotalXp = repository.completeSessionIfRunning(earnedXp)
+        val result = CompletableDeferred<Int?>()
+
+        saveQueue.send(
+            SessionCommand.Complete(
+                earnedXp = earnedXp,
+                result = result
+            )
+        )
+
+        val newTotalXp = result.await()
 
         if (newTotalXp != null) {
             _userProgress.value = _userProgress.value.copy(
                 totalXp = newTotalXp
             )
-        }
 
-        _timer.value = _timer.value.copy(
-            stateSession = StateSession.COMPLETED
-        )
+            _timer.value = _timer.value.copy(
+                stateSession = StateSession.COMPLETED
+            )
+        } else {
+            _timer.value = _timer.value.copy(
+                stateSession = StateSession.CANCELLED
+            )
+        }
     }
 
     fun closeCompletedSession() {
@@ -253,7 +288,13 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
         }
 
         viewModelScope.launch {
-            repository.clearCompletedSession()
+            val result = CompletableDeferred<Unit>()
+
+            saveQueue.send(
+                SessionCommand.ClearCompleted(result)
+            )
+
+            result.await()
 
             if (_timer.value.stateSession == StateSession.COMPLETED) {
                 _timer.value = TimerProgress()
@@ -267,6 +308,15 @@ class PomodoroViewModel(app: Application): AndroidViewModel(app) {
         timerJob = null
 
         _timer.value = TimerProgress(userTimer = minutes)
+
+        enqueueSave(
+            SavedSession(
+                userChooseTimer = minutes,
+                remainingOnSaveMillis = minutes * 60_000L,
+                finishSession = 0L,
+                stateSession = StateSession.SLEEPING
+            )
+        )
     }
 
 }
